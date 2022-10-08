@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 stop()
 {
@@ -65,15 +65,13 @@ create_etc_exports()
         echo "Writes will be immediately written to disk."
         SYNC=sync
     fi
-
-    export 
     
     # Check if the SHARED_DIRECTORY variable is empty
     if [ -z "${SHARED_DIRECTORY}" ]; then
         echo "The SHARED_DIRECTORY environment variable is unset or null, exiting..."
         exit 1
     else
-        add_line_to_etc_exports SHARED_DIRECTORY '${!PERMITTED}(${!READ_ONLY},fsid=0,${!SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash)'
+        add_line_to_etc_exports SHARED_DIRECTORY "${PERMITTED}(${READ_ONLY},fsid=0,${SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash)"
     fi
 
     # This is here to demonstrate how multiple directories can be shared. You
@@ -86,7 +84,7 @@ create_etc_exports()
     while [ -n "$(printenv SHARED_DIRECTORY_${nr})" ]
     do
         # variable SHARED_DIRECTORY_${nr} exists and is not empty
-        add_line_to_etc_exports SHARED_DIRECTORY_${nr} '${!PERMITTED}(${!READ_ONLY},${!SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash)'
+        add_line_to_etc_exports SHARED_DIRECTORY_${nr} "${PERMITTED}(${READ_ONLY},${SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash)"
 
         nr=$(expr $nr + 1)
     done
