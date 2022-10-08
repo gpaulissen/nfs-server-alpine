@@ -19,12 +19,17 @@ stop()
 add_line_to_etc_exports()
 {
     # declare read-only variables
-    declare -r var=$1
-    declare -r line=$2
+    declare -r nr=$1
+    declare -r dir=$2
+    declare fsid=""
 
-    echo "Writing ${var} to /etc/exports file"
-    # use indirection ${!var} to get the value of the variables pointed to by ${var}
-    echo "${!var} $line" >> /etc/exports
+    if [ $nr -eq 1 ]
+    then
+        fsid=",fsid=0"
+    fi
+    
+    echo "Writing ${dir} to /etc/exports file, line ${nr}"
+    echo "${dir} ${PERMITTED}(${READ_ONLY},${SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash${fsid})" >> /etc/exports
 }
 
 create_etc_exports()
@@ -70,23 +75,24 @@ create_etc_exports()
     if [ -z "${SHARED_DIRECTORY}" ]; then
         echo "The SHARED_DIRECTORY environment variable is unset or null, exiting..."
         exit 1
-    else
-        add_line_to_etc_exports SHARED_DIRECTORY "${PERMITTED}(${READ_ONLY},fsid=0,${SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash)"
+    elif [ ! -d "${SHARED_DIRECTORY}" ]; then
+        echo "The directory '${SHARED_DIRECTORY}' does not exist, exiting..."
+        exit 1
     fi
 
-    # This is here to demonstrate how multiple directories can be shared. You
-    # would need a block like this for each extra share.
-    # Any additional shares MUST be subdirectories of the root directory specified
-    # by SHARED_DIRECTORY.
+    # Add root directory ${SHARED_DIRECTORY} and its subfolders to the /etc/exports
+    
+    declare nr=1
+    
+    add_line_to_etc_exports $nr ${SHARED_DIRECTORY}
 
-    # Check if the variables SHARED_DIRECTORY_2, SHARED_DIRECTORY_3 and so on are empty
-    declare nr=2
-    while [ -n "$(printenv SHARED_DIRECTORY_${nr})" ]
+    for dir in $(ls -1 ${SHARED_DIRECTORY})
     do
-        # variable SHARED_DIRECTORY_${nr} exists and is not empty
-        add_line_to_etc_exports SHARED_DIRECTORY_${nr} "${PERMITTED}(${READ_ONLY},${SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash)"
-
-        nr=$(expr $nr + 1)
+        if [ -d "${SHARED_DIRECTORY}/$dir" ]
+        then
+            nr=$(expr $nr + 1)
+            add_line_to_etc_exports $nr "${SHARED_DIRECTORY}/$dir"
+        fi
     done
 
     # set error checking off
