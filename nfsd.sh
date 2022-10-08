@@ -19,17 +19,11 @@ stop()
 add_line_to_etc_exports()
 {
     # declare read-only variables
-    declare -r nr=$1
+    declare -r fsid=$1
     declare -r dir=$2
-    declare fsid=""
-
-    if [ $nr -eq 1 ]
-    then
-        fsid=",fsid=0"
-    fi
     
-    echo "Writing ${dir} to /etc/exports file, line ${nr}"
-    echo "${dir} ${PERMITTED}(${READ_ONLY},${SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash${fsid})" >> /etc/exports
+    echo "Writing ${dir} to /etc/exports file"
+    echo "${dir} ${PERMITTED}(${READ_ONLY},${SYNC},no_subtree_check,no_auth_nlm,insecure,no_root_squash,fsid=${fsid})" >> /etc/exports
 }
 
 create_etc_exports()
@@ -82,16 +76,16 @@ create_etc_exports()
 
     # Add root directory ${SHARED_DIRECTORY} and its subfolders to the /etc/exports
     
-    declare nr=1
+    declare fsid=0
     
-    add_line_to_etc_exports $nr ${SHARED_DIRECTORY}
+    add_line_to_etc_exports $fsid ${SHARED_DIRECTORY}
 
     for dir in $(ls -1 ${SHARED_DIRECTORY})
     do
         if [ -d "${SHARED_DIRECTORY}/$dir" ]
         then
-            nr=$(expr $nr + 1)
-            add_line_to_etc_exports $nr "${SHARED_DIRECTORY}/$dir"
+            fsid=$(expr $fsid + 1)
+            add_line_to_etc_exports $fsid "${SHARED_DIRECTORY}/$dir"
         fi
     done
 
