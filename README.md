@@ -5,6 +5,7 @@ A handy NFS Server image comprising Alpine Linux and NFS v4 only, over TCP on po
 Based on [itsthenetwork/nfs-server-alpine](https://github.com/sjiveson/nfs-server-alpine) but with the addition of:
 - Bring Your Own Exports (BYOE)
 - Automatically add directories below the root shared directory
+- Creating a NFS user and group that owns the /nfs share
 
 ## Overview
 
@@ -36,7 +37,8 @@ The Container folder `/nfsshare` is here intended as the NFS root share in the f
 
 ### Automatically add directories below the root shared directory
 
-When there is **not** a **read-only** `/etc/exports` and when you specify environment variable SHARED_DIRECTORY, the script `nfsd.sh` will create `/etc/exports` with that directory as root shared directory. The directories below that root directory will be added automatically to the `/etc/exports` as well.
+When there is **not** a **read-only** `/etc/exports`, the shared root folder will be specified by the environment variable SHARED_DIRECTORY (that defaults to /nfs).
+The script `nfsd.sh` will create `/etc/exports` with that directory as root shared directory. The directories below that root directory will be added automatically to the `/etc/exports` as well.
 
 There is no more need of an environment variable like SHARED_DIRECTORY_2 as described in the [original documentation](https://github.com/sjiveson/nfs-server-alpine).
 
@@ -51,4 +53,20 @@ $ docker run -d --name nfs --privileged \
          gpaulissen/nfs-server-alpine:latest
 ```
 
-will create an `/etc/exports` with three lines. There may be more lines if `/some/where/fileshare` contains other subfolders than `another2 or `another3`.
+will create an `/etc/exports` with three lines. There may be more lines if `/some/where/fileshare` contains other sub-folders than `another2` or `another3`.
+
+### Creating a NFS user and group that owns the /nfs share
+
+The following environment variables with their default values can be overridden to change the ownership of directory `/nfs`:
+- NFS_GRP=nfs_grp
+- NFS_GID=1000
+- NFS_USR=nfs_usr
+- NFS_UID=1000
+
+## Build
+
+Build the image `gpaulissen/nfs-server-alpine:latest` locally by running the `build.sh` script.
+
+## Test
+
+Please run the `test.sh` script.
