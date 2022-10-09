@@ -21,7 +21,7 @@ Here two examples:
 $ docker run -d --name nfs --privileged \
          -v /some/where/fileshare:/nfsshare \
          -v /path/to/my/exports:/etc/exports:ro \
-         gpaulissen/nfs-server-alpine:latest
+         paulissoft/nfs-server-alpine:latest
 ```
 
 or
@@ -30,7 +30,7 @@ or
 $ docker run -d --name nfs --privileged \
          -v /some/where/fileshare:/nfsshare \
          -v exports-volume:/etc/exports:ro \
-         gpaulissen/nfs-server-alpine:latest
+         paulissoft/nfs-server-alpine:latest
 ```
 
 The Container folder `/nfsshare` is here intended as the NFS root share in the first line of the `/etc/exports`.
@@ -50,7 +50,7 @@ $ docker run -d --name nfs --privileged \
          -v /some/where/else2:/nfsshare/another2 \
          -v /some/where/else3:/nfsshare/another3 \
          -e SHARED_DIRECTORY=/nfsshare \
-         gpaulissen/nfs-server-alpine:latest
+         paulissoft/nfs-server-alpine:latest
 ```
 
 will create an `/etc/exports` with three lines. There may be more lines if `/some/where/fileshare` contains other sub-folders than `another2` or `another3`.
@@ -65,7 +65,7 @@ The following environment variables with their default values can be overridden 
 
 ## Build
 
-Build the image `gpaulissen/nfs-server-alpine:latest` locally by running the `build.sh` script.
+Build the image `paulissoft/nfs-server-alpine:latest` locally by running the `build.sh` script.
 
 ## Test
 

@@ -1,2 +1,2 @@
 #!/bin/sh -eu
-docker build -t gpaulissen/nfs-server-alpine:latest .
+docker build -t paulissoft/nfs-server-alpine:latest .

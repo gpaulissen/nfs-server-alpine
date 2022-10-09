@@ -80,14 +80,41 @@ create_etc_exports()
     
     add_line_to_etc_exports $fsid ${SHARED_DIRECTORY}
 
-    for dir in $(ls -1 ${SHARED_DIRECTORY})
+    # Backwards compability with https://github.com/sjiveson/nfs-server-alpine
+    
+    if [ -n "${SHARED_DIRECTORY_2}" ]; then
+        set -- ${SHARED_DIRECTORY_2}
+    else
+        # get all files/folders in ${SHARED_DIRECTORY} and filter later
+        set -- $(ls -1 ${SHARED_DIRECTORY})
+    fi    
+
+    for dir in 
     do
-        if [ -d "${SHARED_DIRECTORY}/$dir" ]
+        case $dir in
+            # absolute path?
+            /*) ;;
+            *) dir=${SHARED_DIRECTORY}/$dir;;
+        esac
+        if [ -d "$dir" ]
         then
             fsid=$(expr $fsid + 1)
-            add_line_to_etc_exports $fsid "${SHARED_DIRECTORY}/$dir"
+            add_line_to_etc_exports $fsid "$dir"
         fi
     done
+
+    # set error checking off
+    set +e
+}
+
+create_etc_hosts_allow()
+{
+    # set error checking on
+    set -e
+    
+    test ! -f /etc/hosts.allow || rm /etc/hosts.allow
+
+    envsubst < /etc/hosts.allow.txt > /etc/hosts.allow
 
     # set error checking off
     set +e
@@ -187,6 +214,13 @@ then
     echo "A read-only /etc/exports exists so will not overwrite that one"
 else
     create_etc_exports  
+fi
+
+if [ -r /etc/hosts.allow -a ! -w /etc/hosts.allow ]
+then
+    echo "A read-only /etc/hosts.allow exists so will not overwrite that one"
+else
+    create_etc_hosts_allow
 fi
 
 run

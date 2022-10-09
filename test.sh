@@ -7,6 +7,6 @@ echo ""
 echo "Starting nfs server"
 echo ""
 
-docker run -d --name nfs --privileged --volume nfs-server-alpine:/nfs gpaulissen/nfs-server-alpine:latest
+docker run -d --name nfs --privileged --volume nfs-server-alpine:/nfs paulissoft/nfs-server-alpine:latest
 sleep 1
 docker logs nfs

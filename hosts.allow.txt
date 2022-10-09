@@ -1,0 +1,6 @@
+# from https://tldp.org/HOWTO/NFS-HOWTO/index.html
+portmap: ${PERMITTED}
+lockd: ${PERMITTED}
+rquotad: ${PERMITTED}
+mountd: ${PERMITTED}
+statd: ${PERMITTED}
