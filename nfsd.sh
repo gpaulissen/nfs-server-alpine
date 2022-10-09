@@ -80,17 +80,59 @@ create_etc_exports()
     
     add_line_to_etc_exports $fsid ${SHARED_DIRECTORY}
 
-    for dir in $(ls -1 ${SHARED_DIRECTORY})
+    # Backwards compability with https://github.com/sjiveson/nfs-server-alpine
+    
+    if [ -n "${SHARED_DIRECTORY_2}" ]; then
+        set -- ${SHARED_DIRECTORY_2}
+    else
+        # get all files/folders in ${SHARED_DIRECTORY} and filter later
+        set -- $(ls -1 ${SHARED_DIRECTORY})
+    fi    
+
+    for dir in 
     do
-        if [ -d "${SHARED_DIRECTORY}/$dir" ]
+        case $dir in
+            # absolute path?
+            /*) ;;
+            *) dir=${SHARED_DIRECTORY}/$dir;;
+        esac
+        if [ -d "$dir" ]
         then
             fsid=$(expr $fsid + 1)
-            add_line_to_etc_exports $fsid "${SHARED_DIRECTORY}/$dir"
+            add_line_to_etc_exports $fsid "$dir"
         fi
     done
 
     # set error checking off
     set +e
+}
+
+create_etc_hosts_allow()
+{
+    # set error checking on
+    set -ex
+
+    if [ -f /etc/hosts.allow.txt ]
+    then
+        test ! -f /etc/hosts.allow || rm /etc/hosts.allow
+
+        export PERMITTED
+
+        if [ "$PERMITTED" = '*' ]
+        then
+            # inet addr:172.17.0.2  Bcast:172.17.255.255  Mask:255.255.0.0
+            line=$(ifconfig eth0 | grep inet)
+            subnet=$(echo $line | sed -e 's/.*Bcast://g' -e 's/Mask:.*//g' -e 's/255/0/g')
+            mask=$(echo $line | sed -e 's/.*Mask://g')
+            # strip spaces
+            PERMITTED=$(echo "$subnet/$mask" | sed -e 's/ //g')
+        fi
+        
+        envsubst < /etc/hosts.allow.txt > /etc/hosts.allow
+    fi    
+
+    # set error checking off
+    set +ex
 }
 
 run()
@@ -109,9 +151,11 @@ run()
 
         # If $pid is null, do this to start or restart NFS:
         while [ -z "$pid" ]; do
-            echo "Displaying /etc/exports contents:"
-            cat /etc/exports
-            echo ""
+            for f in /etc/exports /etc/hosts.allow /etc/hosts.deny; do
+                echo "Displaying $f contents:"
+                cat $f
+                echo ""
+            done
 
             # Normally only required if v3 will be used
             # But currently enabled to overcome an NFS bug around opening an IPv6 socket
@@ -182,12 +226,18 @@ run()
 # And then exiting
 trap "stop; exit 0;" SIGTERM SIGINT
 
-if [ -r /etc/exports -a ! -w /etc/exports ]
-then
-    echo "A read-only /etc/exports exists so will not overwrite that one"
-else
-    create_etc_exports  
-fi
+for f in /etc/exports /etc/hosts.allow; do
+    if [ -r $f -a ! -w $f ]
+    then
+        echo "A read-only $f exists so will not overwrite that one"
+    else
+        case $f in
+            /etc/exports) create_etc_exports;;
+            /etc/hosts.allow) create_etc_hosts_allow;;
+            *) echo "Programming error: $f"; exit 1;;
+        esac
+    fi
+done
 
 run
 
