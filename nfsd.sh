@@ -110,14 +110,29 @@ create_etc_exports()
 create_etc_hosts_allow()
 {
     # set error checking on
-    set -e
-    
-    test ! -f /etc/hosts.allow || rm /etc/hosts.allow
+    set -ex
 
-    envsubst < /etc/hosts.allow.txt > /etc/hosts.allow
+    if [ -f /etc/hosts.allow.txt ]
+    then
+        test ! -f /etc/hosts.allow || rm /etc/hosts.allow
+
+        export PERMITTED
+
+        if [ "$PERMITTED" = '*' ]
+        then
+            # inet addr:172.17.0.2  Bcast:172.17.255.255  Mask:255.255.0.0
+            line=$(ifconfig eth0 | grep inet)
+            subnet=$(echo $line | sed -e 's/.*Bcast://g' -e 's/Mask:.*//g' -e 's/255/0/g')
+            mask=$(echo $line | sed -e 's/.*Mask://g')
+            # strip spaces
+            PERMITTED=$(echo "$subnet/$mask" | sed -e 's/ //g')
+        fi
+        
+        envsubst < /etc/hosts.allow.txt > /etc/hosts.allow
+    fi    
 
     # set error checking off
-    set +e
+    set +ex
 }
 
 run()
@@ -136,9 +151,11 @@ run()
 
         # If $pid is null, do this to start or restart NFS:
         while [ -z "$pid" ]; do
-            echo "Displaying /etc/exports contents:"
-            cat /etc/exports
-            echo ""
+            for f in /etc/exports /etc/hosts.allow /etc/hosts.deny; do
+                echo "Displaying $f contents:"
+                cat $f
+                echo ""
+            done
 
             # Normally only required if v3 will be used
             # But currently enabled to overcome an NFS bug around opening an IPv6 socket
@@ -209,19 +226,18 @@ run()
 # And then exiting
 trap "stop; exit 0;" SIGTERM SIGINT
 
-if [ -r /etc/exports -a ! -w /etc/exports ]
-then
-    echo "A read-only /etc/exports exists so will not overwrite that one"
-else
-    create_etc_exports  
-fi
-
-if [ -r /etc/hosts.allow -a ! -w /etc/hosts.allow ]
-then
-    echo "A read-only /etc/hosts.allow exists so will not overwrite that one"
-else
-    create_etc_hosts_allow
-fi
+for f in /etc/exports /etc/hosts.allow; do
+    if [ -r $f -a ! -w $f ]
+    then
+        echo "A read-only $f exists so will not overwrite that one"
+    else
+        case $f in
+            /etc/exports) create_etc_exports;;
+            /etc/hosts.allow) create_etc_hosts_allow;;
+            *) echo "Programming error: $f"; exit 1;;
+        esac
+    fi
+done
 
 run
 
