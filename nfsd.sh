@@ -89,7 +89,7 @@ create_etc_exports()
         set -- $(ls -1 ${SHARED_DIRECTORY})
     fi    
 
-    for dir in 
+    for dir in "$@"
     do
         case $dir in
             # absolute path?
@@ -110,7 +110,7 @@ create_etc_exports()
 create_etc_hosts_allow()
 {
     # set error checking on
-    set -ex
+    set -e
 
     if [ -f /etc/hosts.allow.txt ]
     then
@@ -132,7 +132,7 @@ create_etc_hosts_allow()
     fi    
 
     # set error checking off
-    set +ex
+    set +e
 }
 
 run()
