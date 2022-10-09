@@ -19,7 +19,7 @@ ARG NFS_UID
 
 COPY Dockerfile README.md /
 COPY nfsd.sh /usr/bin/nfsd.sh
-# COPY hosts.allow.txt hosts.deny /etc
+COPY hosts.allow.txt hosts.deny /etc
 
 ENV SHARED_DIRECTORY /nfs
 
