@@ -8,7 +8,7 @@ ARG IMAGE=itsthenetwork/nfs-server-alpine:latest
 FROM $IMAGE
 
 LABEL maintainer "Gert-Jan Paulissen <gertjan.paulissen@gmail.com>"
-LABEL source "https://github.com/gpaulissen/nfs-server-alpine"
+LABEL source "https://github.com/paulissoft/nfs-server-alpine"
 LABEL branch "master"
 
 # must redeclare an ARG after FROM (see also https://benkyriakou.com/posts/docker-args-empty)
